@@ -1,0 +1,371 @@
+{
+ "total": 52,
+ "passed": 52,
+ "pass_rate": 1.0,
+ "results": [
+  {
+   "id": "C01",
+   "group": "critical",
+   "title": "Potassium 6.4 blocks the member summary",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C02",
+   "group": "critical",
+   "title": "Potassium 2.7 blocks the member summary",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C03",
+   "group": "critical",
+   "title": "Glucose 420 is critical",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C04",
+   "group": "critical",
+   "title": "Sodium 121 is critical",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C05",
+   "group": "critical",
+   "title": "Hemoglobin 6.5 is critical",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C06",
+   "group": "critical",
+   "title": "Critical value hidden behind a unit: glucose 2.5 mmol/L",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C07",
+   "group": "critical",
+   "title": "Potassium 5.9 is high but not critical",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C08",
+   "group": "critical",
+   "title": "Critical value in an old draw only does not block today",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C09",
+   "group": "critical",
+   "title": "Typo 45 mmol/L potassium is held, not treated as critical",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "C10",
+   "group": "critical",
+   "title": "Critical beats conflict: K 6.5 days after K 4.2 still blocks",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "K01",
+   "group": "conflict",
+   "title": "ApoB 95 then 140 ten days apart pauses lipid rules",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "K02",
+   "group": "conflict",
+   "title": "A1c 5.4 then 6.6 a week apart pauses glucose rules",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "K03",
+   "group": "conflict",
+   "title": "Close draws within assay tolerance are not a conflict",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "K04",
+   "group": "conflict",
+   "title": "Big change over four months is a trend, not a conflict",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "F01",
+   "group": "fasting",
+   "title": "Glucose 110 on a non-fasting draw does not fire",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "F02",
+   "group": "fasting",
+   "title": "Glucose 110 on a fasting draw fires",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "F03",
+   "group": "fasting",
+   "title": "Fasting status unknown does not fire",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U01",
+   "group": "units",
+   "title": "Lp(a) in mg/dL cannot be compared to an nmol/L threshold",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U02",
+   "group": "units",
+   "title": "Lp(a) switched from nmol/L to mg/dL between draws",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U03",
+   "group": "units",
+   "title": "Glucose 6.1 mmol/L converts to about 110 mg/dL and fires",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U04",
+   "group": "units",
+   "title": "ApoB 1.4 g/L converts to 140 mg/dL",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U05",
+   "group": "units",
+   "title": "Vitamin D 40 nmol/L converts to about 16 ng/mL",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U06",
+   "group": "units",
+   "title": "ApoB with no unit printed is held, not used",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "U07",
+   "group": "units",
+   "title": "Unknown test name is flagged and ignored",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "M01",
+   "group": "missing",
+   "title": "No ApoB measured means no lipid rules and no crash",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "M02",
+   "group": "missing",
+   "title": "Labs 300 days old are flagged stale",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "M03",
+   "group": "missing",
+   "title": "No draws at all: no summary claims results look fine",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "M04",
+   "group": "missing",
+   "title": "Marker only in an older draw does not fire on today's plan",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B01",
+   "group": "boundary",
+   "title": "A1c exactly 5.7 fires the 5.7 to 6.4 rule",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B02",
+   "group": "boundary",
+   "title": "A1c 6.45 falls in no gap between rules",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B03",
+   "group": "boundary",
+   "title": "A1c 6.5 moves to the confirm-by-repeat rule",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B04",
+   "group": "boundary",
+   "title": "ApoB exactly 130 is the discuss rule, not the lifestyle rule",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B05",
+   "group": "boundary",
+   "title": "ApoB exactly 90 fires nothing",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B06",
+   "group": "boundary",
+   "title": "hs-CRP 12 is the acute rule, not the routine repeat",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B07",
+   "group": "boundary",
+   "title": "Vitamin D 29.95 falls in no gap between rules",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "B08",
+   "group": "boundary",
+   "title": "Fasting glucose 125.5 still in the 100 to 125 band",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "W01",
+   "group": "wearable",
+   "title": "HRV down 20% and resting HR up fires recovery",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "W02",
+   "group": "wearable",
+   "title": "HRV down but resting HR flat does not fire",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "W03",
+   "group": "wearable",
+   "title": "Big gap in wearable data blocks the trend",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "W04",
+   "group": "wearable",
+   "title": "Average sleep about 6 hours fires sleep rule",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "W05",
+   "group": "wearable",
+   "title": "No wearable linked: no noise, no rule",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "P01",
+   "group": "member",
+   "title": "Five rules firing still gives at most 3 calm next steps",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "P02",
+   "group": "member",
+   "title": "Improving member gets a positive headline",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "P04",
+   "group": "member",
+   "title": "After the call for a critical value, the summary never says steady",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "P03",
+   "group": "member",
+   "title": "All normal: steady headline, nothing to do",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E01",
+   "group": "extraction",
+   "title": "Layout A: 18 values read back exactly",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E02",
+   "group": "extraction",
+   "title": "Layout B: 18 values read back exactly",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E03",
+   "group": "extraction",
+   "title": "Decimal comma and thousands comma",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E04",
+   "group": "extraction",
+   "title": "'<0.2' read as 0.2 and flagged for review",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E05",
+   "group": "extraction",
+   "title": "Report with no collection date is flagged",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E06",
+   "group": "extraction",
+   "title": "Same test twice in one report keeps the first and flags it",
+   "pass": true,
+   "errors": []
+  },
+  {
+   "id": "E07",
+   "group": "extraction",
+   "title": "Diagonal watermark never leaks into values",
+   "pass": true,
+   "errors": []
+  }
+ ]
+}

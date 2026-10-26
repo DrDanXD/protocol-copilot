@@ -1,0 +1,198 @@
+# Example clinic protocol. ILLUSTRATIVE ONLY.
+#
+# Thresholds are drawn from public guidelines where one exists and are marked
+# "clinic target" where they are a clinic's own preference. A real clinic
+# replaces this file with protocols written and signed off by its physicians.
+#
+# Condition language
+#   latest:   {analyte, op: gt|ge|lt|le|between, value | low+high}
+#   rising / falling: {analyte, draws: N, min_pct}  every step moves the same way
+#   wearable: {metric, direction: up|down, min_pct}
+#   fasting:  true   the latest draw was marked fasting
+#   all / any / not
+#
+# Text placeholders: {apob}, {a1c} ... = latest value. {apob_change} = % change.
+
+version: "2026.10-demo"
+clinic: "Example Longevity Clinic"
+
+rules:
+  - id: LIPID-01
+    title: ApoB at a guideline risk-enhancing level
+    category: discuss
+    priority: 1
+    when: {latest: {analyte: apob, op: ge, value: 130}}
+    clinician: "ApoB {apob} mg/dL is at or above 130. Review overall risk and discuss lipid-lowering options."
+    member: "Talk through your heart health plan with your clinician at this visit."
+    source: "2018 AHA/ACC Cholesterol Guideline: ApoB ≥130 mg/dL listed as a risk-enhancing factor"
+
+  - id: LIPID-02
+    title: ApoB above clinic target
+    category: lifestyle
+    priority: 2
+    when: {all: [{latest: {analyte: apob, op: gt, value: 90}}, {latest: {analyte: apob, op: lt, value: 130}}]}
+    clinician: "ApoB {apob} mg/dL is above the clinic target of 90. Suggest fibre and saturated fat swaps. Retest in 3 months."
+    member: "Add one high fibre food a day, like oats or beans, and swap butter for olive oil."
+    source: "Clinic target (illustrative). Background: 2019 ESC/EAS Dyslipidaemia Guidelines on ApoB as a target"
+
+  - id: LIPID-03
+    title: ApoB rising across draws
+    category: monitor
+    priority: 1
+    when: {rising: {analyte: apob, draws: 2, min_pct: 10}}
+    clinician: "ApoB up {apob_change}% since the previous draw. Ask about diet, weight and medication changes. Retest in 3 months."
+    member: "We will recheck your heart markers in about 3 months to see where they settle."
+    source: "Clinic protocol (illustrative): a 10% move between draws exceeds typical assay variation"
+
+  - id: LIPID-04
+    title: Lp(a) at a guideline risk-enhancing level
+    category: discuss
+    priority: 2
+    when: {latest: {analyte: lpa, op: ge, value: 125}}
+    clinician: "Lp(a) {lpa} nmol/L is at or above 125. Largely genetic. Factor into overall risk discussion and consider family screening."
+    member: "One of your heart markers is mostly set by genetics. Your clinician will explain what it means for your plan."
+    source: "2018 AHA/ACC Cholesterol Guideline: Lp(a) ≥125 nmol/L as a risk-enhancing factor"
+
+  - id: LIPID-05
+    title: Triglycerides above lab range
+    category: lifestyle
+    priority: 2
+    when: {latest: {analyte: tg, op: ge, value: 150}}
+    clinician: "Triglycerides {tg} mg/dL. Review alcohol, refined carbs and whether the draw was fasting."
+    member: "Cut back on sugary drinks and alcohol for the next few weeks."
+    source: "Lab reference interval <150 mg/dL. 2018 AHA/ACC lists persistent TG ≥175 as risk-enhancing"
+
+  - id: LIPID-06
+    title: ApoB improving
+    category: monitor
+    priority: 3
+    when: {falling: {analyte: apob, draws: 2, min_pct: 10}}
+    clinician: "ApoB down {apob_change}% since the previous draw. Reinforce current plan."
+    member: "Your heart markers moved in a good direction. Keep doing what you are doing."
+    source: "Clinic protocol (illustrative): reinforce improvements greater than assay variation"
+
+  - id: GLY-01
+    title: A1c in the 5.7 to 6.4 band
+    category: lifestyle
+    priority: 1
+    when: {all: [{latest: {analyte: a1c, op: ge, value: 5.7}}, {latest: {analyte: a1c, op: lt, value: 6.5}}]}
+    clinician: "A1c {a1c}% is in the 5.7 to 6.4% band defined in ADA criteria. Start a lifestyle plan and retest in 3 to 6 months."
+    member: "Take a 10 to 15 minute walk after your largest meal each day."
+    source: "ADA Standards of Care in Diabetes, Section 2 (A1c 5.7 to 6.4% band)"
+
+  - id: GLY-02
+    title: A1c at or above 6.5
+    category: refer
+    priority: 1
+    when: {latest: {analyte: a1c, op: ge, value: 6.5}}
+    clinician: "A1c {a1c}% is at or above 6.5. ADA criteria require confirmation by repeat testing. Order a repeat test and physician review."
+    member: "Your clinician would like to repeat one blood test to confirm a result."
+    source: "ADA Standards of Care in Diabetes, Section 2 (confirmation of results required)"
+
+  - id: GLY-03
+    title: Fasting glucose 100 to 125 on a fasting draw
+    category: lifestyle
+    priority: 2
+    when: {all: [{fasting: true}, {latest: {analyte: glucose, op: ge, value: 100}}, {latest: {analyte: glucose, op: lt, value: 126}}]}
+    clinician: "Fasting glucose {glucose} mg/dL (fasting draw confirmed). Pair with A1c trend before acting."
+    member: "Keep dinner a little earlier and lighter this month."
+    source: "ADA Standards of Care in Diabetes, Section 2 (fasting glucose 100 to 125 mg/dL band)"
+
+  - id: GLY-04
+    title: Insulin and A1c both rising
+    category: monitor
+    priority: 2
+    when: {all: [{rising: {analyte: insulin, draws: 2, min_pct: 20}}, {rising: {analyte: a1c, draws: 2, min_pct: 2}}]}
+    clinician: "Fasting insulin up {insulin_change}% and A1c up {a1c_change}% since the previous draw. Early drift. Review sleep, activity and diet."
+    member: "Add a short walk after meals and aim for a steady bedtime."
+    source: "Clinic protocol (illustrative)"
+
+  - id: INF-01
+    title: hs-CRP above 3
+    category: retest
+    priority: 2
+    when: {all: [{latest: {analyte: hscrp, op: gt, value: 3}}, {latest: {analyte: hscrp, op: lt, value: 10}}]}
+    clinician: "hs-CRP {hscrp} mg/L. Repeat in at least 2 weeks before interpreting. Check for recent illness or hard training."
+    member: "We will repeat one marker in a couple of weeks. A recent cold or tough workout can raise it."
+    source: "AHA/CDC 2003 Scientific Statement on inflammatory markers: repeat hs-CRP >3 mg/L"
+
+  - id: INF-02
+    title: hs-CRP 10 or higher
+    category: retest
+    priority: 1
+    when: {latest: {analyte: hscrp, op: ge, value: 10}}
+    clinician: "hs-CRP {hscrp} mg/L. Values ≥10 suggest an acute process. Ask about symptoms and repeat after 2 weeks."
+    member: "Your clinician will check in about how you have been feeling and repeat one test."
+    source: "AHA/CDC 2003 Scientific Statement: hs-CRP ≥10 mg/L, exclude acute causes and repeat"
+
+  - id: VITD-01
+    title: Vitamin D below 20
+    category: discuss
+    priority: 2
+    when: {latest: {analyte: vitd, op: lt, value: 20}}
+    clinician: "25-OH vitamin D {vitd} ng/mL. Discuss supplementation."
+    member: "Your clinician will talk with you about vitamin D."
+    source: "Endocrine Society 2011 guideline cut point (<20 ng/mL). Note: the 2024 Endocrine Society guideline advises against routine testing in healthy adults under 75"
+
+  - id: VITD-02
+    title: Vitamin D 20 to 29
+    category: lifestyle
+    priority: 3
+    when: {all: [{latest: {analyte: vitd, op: ge, value: 20}}, {latest: {analyte: vitd, op: lt, value: 30}}]}
+    clinician: "25-OH vitamin D {vitd} ng/mL, below the lab's 30 lower limit. Consider dietary sources and daylight. Clinic preference only."
+    member: "Get 15 minutes of daylight outdoors most days."
+    source: "Lab reference interval (30 to 100 ng/mL). Clinic preference (illustrative)"
+
+  - id: THY-01
+    title: TSH outside lab range
+    category: retest
+    priority: 2
+    when: {any: [{latest: {analyte: tsh, op: gt, value: 4.5}}, {latest: {analyte: tsh, op: lt, value: 0.45}}]}
+    clinician: "TSH {tsh} uIU/mL outside the lab range. Repeat with free T4 before drawing conclusions."
+    member: "We will add one thyroid test to your next draw."
+    source: "Lab reference interval (0.45 to 4.5 uIU/mL)"
+
+  - id: KID-01
+    title: eGFR below 60
+    category: refer
+    priority: 1
+    when: {latest: {analyte: egfr, op: lt, value: 60}}
+    clinician: "eGFR {egfr}. KDIGO requires values persisting over 3 months. Repeat and add urine albumin to creatinine ratio. Physician review."
+    member: "Your clinician would like to repeat one kidney test and add a simple urine test."
+    source: "KDIGO 2024 Clinical Practice Guideline for CKD (eGFR <60 for more than 3 months)"
+
+  - id: LIV-01
+    title: ALT above lab range
+    category: retest
+    priority: 2
+    when: {latest: {analyte: alt, op: gt, value: 46}}
+    clinician: "ALT {alt} U/L above the lab range. Ask about alcohol, new supplements and recent hard training. Repeat in 4 to 6 weeks."
+    member: "Go easy on alcohol and pause any new supplements until we repeat one test."
+    source: "Lab reference interval (<46 U/L)"
+
+  - id: HEM-01
+    title: Low ferritin
+    category: discuss
+    priority: 2
+    when: {latest: {analyte: ferritin, op: lt, value: 30}}
+    clinician: "Ferritin {ferritin} ng/mL. Review diet, menstrual history and recent blood donation. Check hemoglobin trend."
+    member: "Your clinician will talk with you about iron in your diet."
+    source: "Lab reference interval (30 to 400 ng/mL)"
+
+  - id: REC-01
+    title: Recovery trending down on wearable
+    category: lifestyle
+    priority: 2
+    when: {all: [{wearable: {metric: hrv_rmssd, direction: down, min_pct: 15}}, {wearable: {metric: resting_hr, direction: up, min_pct: 5}}]}
+    clinician: "HRV down {hrv_rmssd_change}% and resting HR up {resting_hr_change}% (last 14 days vs 1 to 3 months ago). Ask about training load, illness, stress and alcohol."
+    member: "Your body is asking for more recovery. Swap one hard workout this week for an easy walk."
+    source: "Clinic protocol (illustrative). Uses daily summary metrics only, no raw sensor data"
+
+  - id: SLP-01
+    title: Short sleep
+    category: lifestyle
+    priority: 2
+    when: {wearable_level: {metric: sleep_hours, op: lt, value: 6.5}}
+    clinician: "Average sleep {sleep_hours} h over the last 14 days. Discuss sleep timing and caffeine cut-off."
+    member: "Aim to be in bed 30 minutes earlier on weeknights."
+    source: "AASM/SRS 2015 consensus: adults need 7 or more hours of sleep"

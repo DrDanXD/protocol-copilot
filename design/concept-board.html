@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protocol Copilot Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&family=Urbanist:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --board:#14181A;
+  --bg:#E3E5E1; --stone:#D6D8D7; --surface:#EEF0EC; --card:#F6F7F5;
+  --ink:#141719; --muted:#565D59; --faint:#8B918D; --line:rgba(20,23,25,.12);
+  --sage:#7D9C8C; --signal:#2B45E8; --signal-12:rgba(43,69,232,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--board);color:#E9EDEE;font-family:Onest,system-ui,sans-serif;padding:64px 56px 96px}
+.mono{font-family:"IBM Plex Mono",monospace}
+.board-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:48px}
+.board-head h1{font-family:Urbanist,Onest,system-ui,sans-serif;font-weight:600;font-size:56px;letter-spacing:-1.5px;line-height:1}
+.board-head h1 span{color:#6E777A}
+.board-head .mono{font-size:12px;color:#8A9497;letter-spacing:1px;text-align:right;line-height:1.8}
+.row{display:flex;gap:40px;align-items:flex-start}
+.frame{flex:none}
+.frame .cap{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:1.2px;color:#8A9497;margin-top:14px}
+.scaler{overflow:hidden;border-radius:22px;border:10px solid #22282A}
+.screen{transform-origin:0 0;background:var(--bg);color:var(--ink)}
+.desk{width:1440px;height:900px;display:grid;grid-template-columns:76px 1fr}
+/* rail */
+.rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:22px 0;gap:14px}
+.logo{width:40px;height:40px;border-radius:14px;background:var(--ink);display:grid;place-items:center;margin-bottom:18px}
+.ib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.ib.on{background:var(--card);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.main{padding:28px 40px;overflow:hidden}
+.top{display:flex;justify-content:space-between;align-items:center}
+.tabs{display:flex;gap:8px}
+.tab{height:40px;padding:0 20px;border-radius:999px;display:flex;align-items:center;font-size:14px;color:var(--muted);background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.7)}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ADA38D,#7D9C8C)}
+h2.title{font-family:Urbanist,Onest,system-ui,sans-serif;font-weight:600;font-size:56px;letter-spacing:-1.6px;margin:30px 0 4px}
+.sub{font-size:15px;color:var(--faint)} .sub b{color:var(--ink);font-weight:500}
+/* queue */
+.qgrid{display:grid;grid-template-columns:400px 1fr;gap:16px;margin-top:28px}
+.hero{border-radius:28px;padding:28px;position:relative;overflow:hidden;height:560px;
+  background:radial-gradient(110% 80% at 30% 105%,#9FB7AA 0%,#C9D6CE 38%,#EEF0EC 78%)}
+.lbl{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:1.2px;color:var(--muted);text-transform:uppercase}
+.big{font-weight:300;font-size:120px;letter-spacing:-5px;line-height:1;margin-top:18px}
+.big small{font-size:16px;letter-spacing:0;color:var(--muted);font-weight:400;margin-left:8px}
+.split{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.chip{height:30px;padding:0 12px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:12px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--sage)}
+.dot.sig{background:var(--signal);box-shadow:0 0 0 4px var(--signal-12)}
+.dot.ink{background:var(--ink)}
+.hero .foot{position:absolute;left:28px;right:28px;bottom:26px}
+.mbars{display:flex;align-items:flex-end;gap:5px;height:70px}
+.mbars i{display:block;width:3px;background:rgba(20,23,25,.4);border-radius:2px}
+.mbars i.full{background:var(--ink)}
+.hero .foot .mono{font-size:11px;color:var(--muted);margin-top:10px;letter-spacing:.6px}
+.list{background:var(--card);border-radius:28px;padding:18px}
+.lhead{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 14px}
+.lhead .h{font-size:28px;font-weight:500;letter-spacing:-.6px} .lhead .h span{color:#B4B9B5}
+.seg{display:flex;gap:4px;background:var(--surface);border-radius:999px;padding:4px}
+.seg div{padding:6px 14px;border-radius:999px;font-size:12px;color:var(--muted)}
+.seg .on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.prow{display:grid;grid-template-columns:44px 1.3fr 1.6fr 140px 36px;gap:14px;align-items:center;height:62px;padding:0 12px;border-radius:999px}
+.prow+.prow{margin-top:6px}
+.prow:nth-child(odd){background:var(--surface)}
+.pav{width:44px;height:44px;border-radius:50%}
+.pn{font-size:15px;font-weight:500} .pn span{display:block;font-size:12px;color:var(--faint);font-weight:400;margin-top:2px}
+.pwhat{font-size:13px;color:var(--muted)} .pwhat b{color:var(--ink);font-weight:500}
+.state{justify-self:start}
+.state.call{background:var(--ink);color:#fff;border-color:var(--ink)}
+.state.call .dot{background:#fff}
+.more{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--faint)}
+/* review */
+.rgrid{display:grid;grid-template-columns:520px 1fr;gap:16px;margin-top:24px}
+.panel{background:var(--card);border-radius:28px;padding:26px}
+.mhead{display:flex;align-items:center;gap:14px}
+.mhead .pav{width:52px;height:52px}
+.ruler{position:relative;height:56px;margin-top:26px}
+.ticks{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:flex-end}
+.ticks i{width:1px;height:12px;background:rgba(20,23,25,.25)} .ticks i.l{height:22px;background:rgba(20,23,25,.45)}
+.needle{position:absolute;bottom:0;width:2px;height:44px;background:var(--signal);border-radius:2px}
+.needle::after{content:"";position:absolute;top:-5px;left:-4px;width:10px;height:10px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 6px var(--signal-12)}
+.zone{position:absolute;bottom:0;height:3px;background:var(--sage);border-radius:2px}
+.rlabels{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10px;color:var(--faint);margin-top:8px}
+.spark{margin-top:26px;border-top:1px solid var(--line);padding-top:18px}
+.changed{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.changed .chip{background:var(--surface);border-color:var(--line);height:34px;font-size:13px}
+.items{display:flex;flex-direction:column;gap:12px}
+.item{background:var(--card);border-radius:24px;padding:20px 22px;display:grid;grid-template-columns:1fr auto;gap:10px 18px}
+.item .rid{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;letter-spacing:1px;color:var(--signal);background:var(--signal-12);padding:4px 10px;border-radius:999px;justify-self:start}
+.item .txt{grid-column:1/2;font-size:18px;line-height:1.35;letter-spacing:-.2px}
+.item .why{grid-column:1/2;display:flex;gap:8px;flex-wrap:wrap}
+.item .why .chip{background:var(--surface);border-color:var(--line)}
+.item .src{grid-column:1/2;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:10.5px;color:var(--faint);letter-spacing:.3px}
+.acts{grid-column:2/3;grid-row:1/5;display:flex;flex-direction:column;gap:8px;align-self:center}
+.pill{height:42px;padding:0 20px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500}
+.pill.solid{background:var(--ink);color:#fff}
+.pill.ghost{border:1px solid var(--line);color:var(--ink);background:#fff}
+.pill.sig{background:var(--signal);color:#fff}
+.approve-bar{margin-top:6px;display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:#fff;border-radius:999px;padding:8px 8px 8px 24px}
+.approve-bar .mono{font-size:11px;color:#9AA2A5;letter-spacing:.8px}
+/* phone */
+.phone{width:393px;height:852px;position:relative;overflow:hidden;color:#fff;font-family:Onest,system-ui,sans-serif;
+  background:radial-gradient(70% 45% at 50% 38%,#6C8E7D 0%,#3F5A4D 45%,#1C2622 100%)}
+.phone::before{content:"";position:absolute;left:50%;top:150px;width:150px;height:150px;margin-left:-75px;border-radius:50%;background:#0F1613;filter:blur(18px);opacity:.55}
+.phone::after{content:"";position:absolute;left:50%;top:270px;width:300px;height:260px;margin-left:-150px;border-radius:50% 50% 0 0;background:#0F1613;filter:blur(22px);opacity:.5}
+.grain{position:absolute;inset:0;opacity:.14;mix-blend-mode:overlay;pointer-events:none;z-index:1;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.pz{position:relative;z-index:2;padding:0 20px}
+.status{display:flex;justify-content:space-between;font-size:14px;font-weight:500;padding:16px 28px 0;position:relative;z-index:2}
+.ptop{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
+.gib{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(12px)}
+.ptop .mono{font-size:11px;letter-spacing:1.4px;opacity:.75}
+.ghost-word{position:absolute;top:96px;left:0;right:0;text-align:center;font-family:Urbanist,Onest,system-ui,sans-serif;font-weight:600;font-size:132px;letter-spacing:-6px;color:rgba(255,255,255,.07);z-index:1}
+.greet{margin-top:250px;font-size:34px;font-weight:300;letter-spacing:-1px;line-height:1.1}
+.greet b{font-weight:500}
+.glass{margin-top:18px;border-radius:24px;padding:16px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.glass .lbl{color:rgba(255,255,255,.7)}
+.step{display:flex;gap:12px;align-items:flex-start;margin-top:12px;font-size:15px;line-height:1.35}
+.step .n{flex:none;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font-size:12px;font-family:"IBM Plex Mono",ui-monospace,monospace}
+.calm{display:flex;gap:8px;margin-top:14px}
+.calm .chip{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+.dock{position:absolute;left:44px;right:44px;bottom:30px;height:60px;border-radius:999px;background:rgba(20,26,24,.72);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:space-between;padding:0 8px;z-index:3;border:1px solid rgba(255,255,255,.1)}
+.dock .on{height:44px;padding:0 18px;border-radius:999px;background:#fff;color:var(--ink);display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500}
+.dock .off{width:44px;height:44px;display:grid;place-items:center;color:rgba(255,255,255,.55)}
+</style>
+</head>
+<body>
+
+<div class="board-head">
+  <h1>Protocol Copilot <span>· concept</span></h1>
+  <div class="mono">EDITORIAL LIGHT · SIGNAL COBALT #2B45E8<br>SYNTHETIC DATA FROM THE DEMO COHORT</div>
+</div>
+
+<div class="row">
+  <!-- 01 QUEUE -->
+  <div class="frame">
+    <div class="scaler" style="width:777px;height:490px"><div class="screen desk" style="transform:scale(.526)">
+      <div class="rail">
+        <div class="logo"><svg class="i" viewBox="0 0 24 24" style="stroke:#fff"><path d="M12 3v18M3 12h18"/></svg></div>
+        <div class="ib on"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3 7 4-14 3 7h4"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></div>
+      </div>
+      <div class="main">
+        <div class="top">
+          <div class="tabs"><div class="tab on">Prep</div><div class="tab">Members</div><div class="tab">Protocols</div><div class="tab">Learning</div></div>
+          <div class="who">Mon, Nov 2 <div class="av"></div></div>
+        </div>
+        <h2 class="title">Today's prep</h2>
+        <div class="sub">Drafts are ready. <b>You approve every word.</b></div>
+        <div class="qgrid">
+          <div class="hero">
+            <div class="lbl">[Members to prep]</div>
+            <div class="big">12<small>visits today</small></div>
+            <div class="split">
+              <span class="chip"><span class="dot ink"></span>1 call today</span>
+              <span class="chip"><span class="dot sig"></span>8 need a look</span>
+              <span class="chip"><span class="dot"></span>3 ready</span>
+            </div>
+            <div class="foot">
+              <div class="mbars"><i style="height:30%"></i><i style="height:52%"></i><i style="height:44%"></i><i style="height:70%"></i><i style="height:38%"></i><i style="height:60%"></i><i style="height:82%"></i><i style="height:48%"></i><i style="height:66%"></i><i class="full" style="height:100%"></i><i style="height:40%"></i><i style="height:58%"></i></div>
+              <div class="mono">DRAFT ITEMS PER MEMBER · 51/51 TEST CASES PASS</div>
+            </div>
+          </div>
+          <div class="list">
+            <div class="lhead"><div class="h">Queue <span>Done</span></div><div class="seg"><div class="on">All</div><div>Lipids</div><div>Glucose</div><div>Recovery</div></div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#3A3F3C,#8B918D)"></div><div class="pn">Aisha <span>56 · 9:00 AM</span></div><div class="pwhat">Potassium <b>4.29 → 6.3</b> mmol/L</div><span class="chip state call"><span class="dot"></span>Call today</span><div class="more">⋯</div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#ADA38D,#E3D9C4)"></div><div class="pn">Marcus <span>41 · 9:40 AM</span></div><div class="pwhat">ApoB <b>109 → 128</b> mg/dL · +17%</div><span class="chip state"><span class="dot sig"></span>Needs a look</span><div class="more">⋯</div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#7D9C8C,#C9D6CE)"></div><div class="pn">Elena <span>44 · 10:20 AM</span></div><div class="pwhat">A1c <b>5.4 → 5.7 → 5.9</b> %</div><span class="chip state"><span class="dot sig"></span>Needs a look</span><div class="more">⋯</div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#565D59,#ADA38D)"></div><div class="pn">James <span>47 · 11:00 AM</span></div><div class="pwhat">HRV <b>47 → 35</b> ms · 14 days</div><span class="chip state"><span class="dot sig"></span>Needs a look</span><div class="more">⋯</div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#C9D6CE,#7D9C8C)"></div><div class="pn">Daniel <span>53 · 11:40 AM</span></div><div class="pwhat">ApoB <b>104 → 90</b> mg/dL · improving</div><span class="chip state"><span class="dot"></span>Ready</span><div class="more">⋯</div></div>
+            <div class="prow"><div class="pav" style="background:linear-gradient(135deg,#E3D9C4,#8B918D)"></div><div class="pn">Sophia <span>38 · 1:00 PM</span></div><div class="pwhat">Nothing moved more than 10%</div><span class="chip state"><span class="dot"></span>Ready</span><div class="more">⋯</div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="cap">01 · PREP QUEUE</div>
+  </div>
+
+  <!-- 02 REVIEW -->
+  <div class="frame">
+    <div class="scaler" style="width:777px;height:490px"><div class="screen desk" style="transform:scale(.526)">
+      <div class="rail">
+        <div class="logo"><svg class="i" viewBox="0 0 24 24" style="stroke:#fff"><path d="M12 3v18M3 12h18"/></svg></div>
+        <div class="ib on"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3 7 4-14 3 7h4"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6"/></svg></div>
+        <div class="ib"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></div>
+      </div>
+      <div class="main">
+        <div class="top">
+          <div class="tabs"><div class="tab">‹ Queue</div><div class="tab on">Draft plan</div><div class="tab">Labs</div><div class="tab">Member view</div></div>
+          <div class="who">2 of 12 <div class="av"></div></div>
+        </div>
+        <div class="rgrid">
+          <div class="panel">
+            <div class="mhead"><div class="pav" style="background:linear-gradient(135deg,#ADA38D,#E3D9C4)"></div><div class="pn" style="font-size:22px">Marcus <span>41 · last draw Oct 23 · fasting</span></div></div>
+            <div class="lbl" style="margin-top:30px">[ApoB]</div>
+            <div class="big" style="font-size:104px">128<small>mg/dL</small></div>
+            <div class="ruler">
+              <div class="ticks"><i class="l"></i><i></i><i></i><i></i><i></i><i class="l"></i><i></i><i></i><i></i><i></i><i class="l"></i><i></i><i></i><i></i><i></i><i class="l"></i><i></i><i></i><i></i><i></i><i class="l"></i><i></i><i></i><i></i><i></i><i class="l"></i></div>
+              <div class="zone" style="left:0;width:40%"></div>
+              <div class="needle" style="left:68%"></div>
+            </div>
+            <div class="rlabels"><span>60</span><span>90 CLINIC TARGET</span><span>130</span><span>160</span></div>
+            <div class="spark">
+              <div class="lbl">[Three draws]</div>
+              <svg viewBox="0 0 460 90" width="460" height="90" style="margin-top:10px;display:block">
+                <path d="M10 70 L225 47 L450 18 L450 90 L10 90 Z" fill="rgba(20,23,25,.07)"/>
+                <path d="M10 70 L225 47 L450 18" fill="none" stroke="rgba(20,23,25,.7)" stroke-width="1"/>
+                <circle cx="10" cy="70" r="3" fill="#141719"/><circle cx="225" cy="47" r="3" fill="#141719"/><circle cx="450" cy="18" r="5" fill="#2B45E8"/>
+              </svg>
+              <div class="rlabels"><span>MAR · 91</span><span>JUL · 109</span><span>OCT · 128</span></div>
+            </div>
+            <div class="changed">
+              <span class="chip"><span class="dot sig"></span>ApoB +17% since July</span>
+              <span class="chip"><span class="dot"></span>No flags · fasting draw · units match</span>
+            </div>
+          </div>
+          <div>
+            <div class="items">
+              <div class="item">
+                <span class="rid">LIPID-03 · MONITOR</span>
+                <div class="txt">ApoB up 17% since the previous draw. Ask about diet, weight and medication changes. Retest in 3 months.</div>
+                <div class="why"><span class="chip">91 → 109 → 128 mg/dL</span><span class="chip">rising 2 draws in a row</span></div>
+                <div class="src">CLINIC PROTOCOL 2026.10 · A 10% MOVE EXCEEDS TYPICAL ASSAY VARIATION</div>
+                <div class="acts"><div class="pill solid">Approve</div><div class="pill ghost">Edit</div></div>
+              </div>
+              <div class="item">
+                <span class="rid">LIPID-02 · LIFESTYLE</span>
+                <div class="txt">ApoB 128 mg/dL is above the clinic target of 90. Suggest fibre and saturated fat swaps. Retest in 3 months.</div>
+                <div class="why"><span class="chip">128 vs target 90</span></div>
+                <div class="src">CLINIC TARGET · BACKGROUND: 2019 ESC/EAS DYSLIPIDAEMIA GUIDELINES</div>
+                <div class="acts"><div class="pill solid">Approve</div><div class="pill ghost">Edit</div></div>
+              </div>
+              <div class="item" style="background:transparent;border:1px dashed rgba(20,23,25,.2)">
+                <span class="rid" style="color:var(--muted);background:var(--surface)">+ ADD YOUR OWN</span>
+                <div class="txt" style="color:var(--faint)">Anything the protocol missed. Added items are tracked so the protocol can learn.</div>
+              </div>
+            </div>
+            <div class="approve-bar" style="margin-top:14px">
+              <span class="mono">2 ITEMS · DRAFT, NOT A DIAGNOSIS · EVERY ITEM SHOWS ITS BASIS</span>
+              <div class="pill sig">Approve and preview member view →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="cap">02 · DRAFT PLAN WITH ITS BASIS</div>
+  </div>
+
+  <!-- 03 PHONE -->
+  <div class="frame">
+    <div class="scaler" style="width:252px;height:546px;border-radius:40px"><div class="screen phone" style="transform:scale(.6)">
+      <div class="grain"></div>
+      <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+      <div class="ghost-word">Plan</div>
+      <div class="pz">
+        <div class="ptop"><div class="gib"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div><span class="mono">AFTER YOUR VISIT</span><div class="gib"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div></div>
+        <div class="greet">Hi Marcus.<br><b>Here is your plan until we next meet.</b></div>
+        <div class="glass">
+          <div class="lbl">[Next steps]</div>
+          <div class="step"><span class="n">1</span>We will recheck your heart markers in about 3 months to see where they settle.</div>
+          <div class="step"><span class="n">2</span>Add one high fibre food a day, like oats or beans, and swap butter for olive oil.</div>
+        </div>
+        <div class="calm"><span class="chip"><span class="dot" style="background:#C9D6CE"></span>Approved by your clinician</span><span class="chip">Retest · Feb</span></div>
+      </div>
+      <div class="dock"><div class="on"><svg class="i" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg>Plan</div><div class="off"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><div class="off"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div></div>
+    </div></div>
+    <div class="cap">03 · MEMBER VIEW · NO SCORES</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+data/edit_log.jsonl
+*.egg-info/

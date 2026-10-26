@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Protocol Copilot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600&family=Urbanist:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Ron Design Lab Editorial Light. One loud number per screen, cobalt marks meaning only. */
+:root{
+  --bg:#E3E5E1; --surface:#EEF0EC; --card:#F6F7F5; --raise:#FFFFFF;
+  --ink:#141719; --muted:#565D59; --faint:#7F8682; --line:rgba(20,23,25,.12); --line-2:rgba(20,23,25,.22);
+  --sage:#7D9C8C; --sage-soft:#C9D6CE; --signal:#2B45E8; --signal-12:rgba(43,69,232,.12); --on-ink:#FFFFFF;
+  --glow-a:#9FB7AA; --glow-b:#C9D6CE;
+  --phone-a:#6C8E7D; --phone-b:#3F5A4D; --phone-c:#1C2622;
+  --display:Urbanist,Onest,system-ui,sans-serif; --body:Onest,system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111413; --surface:#181C1A; --card:#1E2320; --raise:#262C29;
+  --ink:#E8ECE9; --muted:#A4ACA7; --faint:#7C847F; --line:rgba(232,236,233,.10); --line-2:rgba(232,236,233,.2);
+  --sage:#8FB09F; --sage-soft:#2E3A34; --signal:#7088FF; --signal-12:rgba(112,136,255,.16); --on-ink:#111413;
+  --glow-a:#35493F; --glow-b:#232C27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111413; --surface:#181C1A; --card:#1E2320; --raise:#262C29;
+  --ink:#E8ECE9; --muted:#A4ACA7; --faint:#7C847F; --line:rgba(232,236,233,.10); --line-2:rgba(232,236,233,.2);
+  --sage:#8FB09F; --sage-soft:#2E3A34; --signal:#7088FF; --signal-12:rgba(112,136,255,.16); --on-ink:#111413;
+  --glow-a:#35493F; --glow-b:#232C27; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* top bar */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:500}
+.logo{width:40px;height:40px;border-radius:14px;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{height:40px;padding:0 18px;border-radius:999px;display:flex;align-items:center;font-size:14px;color:var(--muted);background:var(--card);border:1px solid var(--line)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.mode{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.chip{min-height:30px;padding:4px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:12px;background:var(--card);border:1px solid var(--line);white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--sage);flex:none}
+.dot.sig{background:var(--signal);box-shadow:0 0 0 4px var(--signal-12)}
+.dot.ink{background:var(--ink)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(36px,5vw,60px);letter-spacing:-1.6px;line-height:1.02;margin:6px 0 0;text-wrap:balance}
+.sub{color:var(--faint);margin:6px 0 0} .sub b{color:var(--ink);font-weight:500}
+
+/* prep */
+.prep{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:16px}
+.hero{border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:18px;min-height:420px;
+  background:radial-gradient(110% 80% at 30% 105%,var(--glow-a) 0%,var(--glow-b) 40%,var(--surface) 80%)}
+.big{font-weight:300;font-size:clamp(84px,9vw,120px);letter-spacing:-5px;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:15px;letter-spacing:0;color:var(--muted);font-weight:400;margin-left:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.hero .chip{background:color-mix(in srgb,var(--card) 70%,transparent)}
+.mbars{display:flex;align-items:flex-end;gap:6px;height:72px}
+.hero>div:last-child{margin-top:auto}
+.mbars i{display:block;width:4px;border-radius:2px;background:color-mix(in srgb,var(--ink) 40%,transparent)}
+.mbars i.top{background:var(--ink)}
+.list{background:var(--card);border-radius:28px;padding:14px;min-width:0}
+.lhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px 14px;flex-wrap:wrap}
+.lhead .h{font-size:26px;font-weight:500;letter-spacing:-.6px}
+.seg{display:flex;gap:4px;background:var(--surface);border-radius:999px;padding:4px;flex-wrap:wrap}
+.seg button{padding:6px 14px;border-radius:999px;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--raise);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.prow{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.4fr) 128px 20px;gap:14px;align-items:center;min-height:62px;padding:8px 12px;border-radius:999px;width:100%;text-align:left}
+.prow:nth-child(odd){background:var(--surface)}
+.prow:hover{box-shadow:inset 0 0 0 1px var(--line-2)}
+.pav{width:44px;height:44px;border-radius:50%;flex:none}
+.pn{font-size:15px;font-weight:500;min-width:0} .pn span{display:block;font-size:12px;color:var(--faint);font-weight:400}
+.pwhat{font-size:13px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .pwhat b{color:var(--ink);font-weight:500}
+.state.call{background:var(--ink);color:var(--on-ink);border-color:var(--ink)} .state.call .dot{background:var(--on-ink)}
+.state.done{color:var(--muted)}
+
+/* review */
+.review{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr) 300px;gap:16px;align-items:start}
+.panel{background:var(--card);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.mhead{display:flex;align-items:center;gap:14px}
+.mhead .pav{width:52px;height:52px}
+.mhead .pn{font-size:21px}
+.metric .big{font-size:clamp(72px,7vw,100px)}
+.ruler{position:relative;height:52px}
+.ticks{position:absolute;inset:0;display:flex;justify-content:space-between;align-items:flex-end}
+.ticks i{width:1px;height:12px;background:var(--line-2)} .ticks i.l{height:22px;background:var(--faint)}
+.zone{position:absolute;bottom:0;height:3px;background:var(--sage);border-radius:2px}
+.needle{position:absolute;bottom:0;width:2px;height:42px;background:var(--signal);border-radius:2px;transform:translateX(-1px)}
+.needle::after{content:"";position:absolute;top:-5px;left:-4px;width:10px;height:10px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 6px var(--signal-12)}
+.rlabels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:6px;gap:6px}
+.spark svg{width:100%;height:auto;display:block}
+.stack{display:flex;flex-direction:column;gap:8px}
+.flag{border-radius:18px;padding:12px 14px;font-size:13px;background:var(--surface);border:1px solid var(--line);display:flex;gap:10px;align-items:flex-start}
+.flag.crit{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.flag .k{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.75;flex:none;padding-top:2px}
+.items{display:flex;flex-direction:column;gap:12px;min-width:0}
+.item{background:var(--card);border-radius:24px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;border:1px solid transparent}
+.item[data-state="approved"]{border-color:var(--sage)}
+.item[data-state="removed"]{opacity:.5}
+.item[data-state="removed"] .txt{text-decoration:line-through}
+.rid{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--signal);background:var(--signal-12);padding:4px 10px;border-radius:999px;justify-self:start}
+.rid.crit{color:var(--on-ink);background:var(--ink)}
+.txt{grid-column:1;font-size:17px;line-height:1.4;letter-spacing:-.2px}
+.why{grid-column:1;display:flex;gap:6px;flex-wrap:wrap}
+.why .chip{background:var(--surface);white-space:normal}
+.src{grid-column:1;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.2px}
+.memtxt{grid-column:1;font-size:13px;color:var(--muted)} .memtxt b{font-weight:500;color:var(--ink)}
+.acts{grid-column:2;grid-row:1/6;display:flex;flex-direction:column;gap:8px;align-self:center}
+.pill{min-height:40px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:500;white-space:nowrap}
+.pill.solid{background:var(--ink);color:var(--on-ink)}
+.pill.ghost{border:1px solid var(--line-2);background:var(--raise)}
+.pill.sig{background:var(--signal);color:#fff}
+.pill[disabled]{opacity:.45;cursor:not-allowed}
+.editbox{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.editbox textarea{width:100%;min-height:72px;border-radius:16px;border:1px solid var(--line-2);background:var(--raise);padding:10px 12px;resize:vertical}
+.add{border:1px dashed var(--line-2);background:transparent}
+.bar2{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--ink);color:var(--on-ink);border-radius:28px;padding:10px 10px 10px 22px}
+.bar2 .mono{font-size:11px;letter-spacing:.8px;opacity:.7}
+.check{display:flex;gap:10px;align-items:center;font-size:13px;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.check input{width:18px;height:18px;accent-color:var(--signal)}
+.toast{font-size:13px;color:var(--muted)}
+
+/* phone */
+.phone{width:100%;max-width:300px;aspect-ratio:393/760;border-radius:40px;border:9px solid #22282A;overflow:hidden;position:relative;color:#fff;
+  background:radial-gradient(70% 45% at 50% 34%,var(--phone-a) 0%,var(--phone-b) 45%,var(--phone-c) 100%)}
+.phone .sil1{position:absolute;left:50%;top:15%;width:34%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:#0F1613;filter:blur(16px);opacity:.55}
+.phone .sil2{position:absolute;left:50%;top:30%;width:76%;height:30%;transform:translateX(-50%);border-radius:50% 50% 0 0;background:#0F1613;filter:blur(20px);opacity:.5}
+.phone .ghost{position:absolute;top:8%;left:0;right:0;text-align:center;font-family:var(--display);font-weight:600;font-size:86px;letter-spacing:-4px;color:rgba(255,255,255,.07)}
+.phone .in{position:absolute;inset:0;padding:18px 16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.phone .top{display:flex;justify-content:space-between;align-items:center}
+.phone .top .mono{font-size:10px;letter-spacing:1.3px;opacity:.75}
+.phone .greet{margin-top:auto;font-size:23px;font-weight:300;letter-spacing:-.6px;line-height:1.15}
+.phone .greet b{font-weight:500}
+.glass{border-radius:22px;padding:14px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:flex;flex-direction:column;gap:10px;font-size:13px}
+.glass .lbl{color:rgba(255,255,255,.72)}
+.step{display:flex;gap:10px;align-items:flex-start;line-height:1.35}
+.step .n{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.4);display:grid;place-items:center;font-size:11px;font-family:var(--mono)}
+.held{font-size:13px;line-height:1.4}
+.phone .chip{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff}
+.side{display:flex;flex-direction:column;gap:12px;align-items:center;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+.side .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;color:var(--faint);text-align:center}
+
+/* labs + learning */
+.tablewrap{overflow-x:auto;background:var(--card);border-radius:28px;padding:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;color:var(--muted);font-weight:400;text-transform:uppercase}
+td.held{color:var(--signal)}
+.learn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.ring{display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px;background:var(--card);border-radius:28px}
+.ring svg{width:120px;height:120px}
+.ring .v{font-size:30px;font-weight:300;font-variant-numeric:tabular-nums}
+.empty{padding:28px;color:var(--muted);background:var(--card);border-radius:28px}
+.foot{font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;color:var(--faint)}
+
+@media (max-width:1180px){.review{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.side{grid-column:1/-1}}
+@media (max-width:820px){
+  .prep,.review,.learn{grid-template-columns:minmax(0,1fr)}
+  .hero{min-height:0}
+  .prow{grid-template-columns:40px minmax(0,1fr) auto;border-radius:22px}
+  .prow .state{justify-self:end}
+  .prow .pwhat{grid-column:2/4;grid-row:2;white-space:normal}
+  .prow .more{display:none}
+  .item{grid-template-columns:minmax(0,1fr)}
+  .acts{grid-column:1;grid-row:auto;flex-direction:row;flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:no-preference){.needle{transition:left .5s cubic-bezier(.2,.7,.2,1)}.item{transition:opacity .3s ease,border-color .3s ease}}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="brand"><div class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></div>Protocol Copilot</div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" role="tab" id="t-prep" data-view="prep">Prep</button>
+      <button class="tab" role="tab" id="t-review" data-view="review">Draft plan</button>
+      <button class="tab" role="tab" id="t-labs" data-view="labs">Labs</button>
+      <button class="tab" role="tab" id="t-learning" data-view="learning">Learning</button>
+    </nav>
+    <div class="mode"><span class="chip" id="mode"><span class="dot"></span>Loading</span></div>
+  </header>
+  <main id="view"></main>
+  <p class="foot">Synthetic demo data. Drafts for clinician review, not a diagnosis. Every item shows its basis.</p>
+</div>
+
+<script>window.__SNAPSHOT__ = null;</script>
+<script>
+(() => {
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = v => (v == null ? "–" : (+v).toLocaleString(undefined, {maximumFractionDigits: Math.abs(v) >= 10 ? 1 : 2}));
+const ICON = {
+  back:'<svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>',
+  plus:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg class="i" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>',
+  more:'<svg class="i" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+};
+const AV = ["#3A3F3C,#8B918D","#ADA38D,#E3D9C4","#7D9C8C,#C9D6CE","#565D59,#ADA38D","#C9D6CE,#7D9C8C","#E3D9C4,#8B918D"];
+
+// ---------- state ----------
+const S = { snap:null, live:false, view:"prep", filter:"All", current:null, work:{}, done:{}, log:[], serverLearning:null, toast:"" };
+try { S.log = JSON.parse(localStorage.getItem("pc-log") || "[]"); } catch (e) { S.log = []; }
+const saveLog = () => { try { localStorage.setItem("pc-log", JSON.stringify(S.log)); } catch (e) {} };
+
+async function load() {
+  if (window.__SNAPSHOT__) { S.snap = window.__SNAPSHOT__; }
+  else {
+    try { const r = await fetch("snapshot", {headers:{Accept:"application/json"}}); if (r.ok) { S.snap = await r.json(); S.live = true; } } catch (e) {}
+    if (!S.snap) { try { const r = await fetch("snapshot.json"); if (r.ok) S.snap = await r.json(); } catch (e) {} }
+  }
+  const m = $("#mode");
+  if (!S.snap) { $("#view").innerHTML = '<div class="empty">Could not load member data. Run <span class="mono">python scripts/export_snapshot.py</span> or start the API.</div>'; m.innerHTML = '<span class="dot ink"></span>No data'; return; }
+  m.innerHTML = S.live ? '<span class="dot sig"></span>Live API' : '<span class="dot"></span>Demo snapshot';
+  S.current = S.snap.members[1]?.member_id || S.snap.members[0].member_id;
+  const h = (location.hash || "").slice(1);
+  if (["prep","review","labs","learning"].includes(h)) S.view = h;
+  render();
+}
+
+const member = id => S.snap.members.find(x => x.member_id === id);
+const avatar = id => { const n = S.snap.members.findIndex(x => x.member_id === id); return `background:linear-gradient(135deg,${AV[n % AV.length]})`; };
+const slot = id => { const n = S.snap.members.findIndex(x => x.member_id === id); const t = 9 * 60 + n * 40; const h = Math.floor(t / 60), mm = t % 60; return `${((h + 11) % 12) + 1}:${String(mm).padStart(2,"0")} ${h < 12 ? "AM" : "PM"}`; };
+const POSITIVE = new Set(["LIPID-06"]);
+
+function stateOf(m) {
+  if (S.done[m.member_id]) return {k:"done", label:"Approved", cls:"done", dot:""};
+  if (m.plan.status === "blocked_critical") return {k:"call", label:"Call today", cls:"call", dot:""};
+  const needs = m.plan.items.some(i => !POSITIVE.has(i.rule_id)) || m.plan.flags.length;
+  return needs ? {k:"look", label:"Needs a look", cls:"", dot:"sig"} : {k:"ready", label:"Ready", cls:"", dot:""};
+}
+function headlineChange(m) {
+  const crit = m.plan.items.find(i => i.rule_id === "CRITICAL");
+  const it = crit || m.plan.items[0];
+  const ev = it?.evidence?.[0];
+  if (!ev) return "Nothing moved more than 10%";
+  const vals = ev.values.slice(-3).map(v => fmt(v[1])).join(" → ");
+  return `${esc(short(ev.display))} <b>${vals}</b> ${esc(ev.unit)}`;
+}
+const short = d => ({"Apolipoprotein B":"ApoB","Hemoglobin A1c":"A1c","Glucose, Fasting":"Glucose","Insulin, Fasting":"Insulin","Vitamin D, 25-OH":"Vitamin D","HRV (ms)":"HRV","Resting HR (bpm)":"Resting HR"}[d] || d);
+const CATS = {All:null, Lipids:/^LIPID/, Glucose:/^GLY/, Recovery:/^(REC|SLP)/, Calls:/^CRITICAL$/};
+
+// ---------- prep ----------
+function viewPrep() {
+  const ms = S.snap.members;
+  const st = ms.map(stateOf);
+  const count = k => st.filter(s => s.k === k).length;
+  const bars = ms.map(m => m.plan.items.length);
+  const mx = Math.max(1, ...bars);
+  const rows = ms.filter(m => !CATS[S.filter] || m.plan.items.some(i => CATS[S.filter].test(i.rule_id)));
+  return `
+  <section><h1>Today's prep</h1><p class="sub">Drafts are ready. <b>You approve every word.</b></p></section>
+  <section class="prep" style="margin-top:22px">
+    <div class="hero">
+      <div class="lbl">[Members to prep]</div>
+      <div class="big">${ms.length - count("done")}<small>of ${ms.length} visits left</small></div>
+      <div class="chips">
+        <span class="chip"><span class="dot ink"></span>${count("call")} call today</span>
+        <span class="chip"><span class="dot sig"></span>${count("look")} need a look</span>
+        <span class="chip"><span class="dot"></span>${count("ready")} ready</span>
+        ${count("done") ? `<span class="chip">${ICON.check}${count("done")} approved</span>` : ""}
+      </div>
+      <div>
+        <div class="mbars" aria-hidden="true">${bars.map(b => `<i class="${b === mx ? "top" : ""}" style="height:${Math.max(8, b / mx * 100)}%"></i>`).join("")}</div>
+        <div class="lbl" style="margin-top:10px">Draft items per member · protocol ${esc(S.snap.protocol)}</div>
+      </div>
+    </div>
+    <div class="list">
+      <div class="lhead"><div class="h">Queue</div>
+        <div class="seg" role="group" aria-label="Filter">${Object.keys(CATS).map(k => `<button aria-pressed="${S.filter === k}" data-filter="${k}">${k}</button>`).join("")}</div>
+      </div>
+      ${rows.map(m => { const s = stateOf(m); return `
+        <button class="prow" data-open="${m.member_id}">
+          <span class="pav" style="${avatar(m.member_id)}"></span>
+          <span class="pn">${esc(m.first_name)}<span>${m.age} · ${slot(m.member_id)}</span></span>
+          <span class="pwhat">${headlineChange(m)}</span>
+          <span class="chip state ${s.cls}"><span class="dot ${s.dot}"></span>${s.label}</span>
+          <span class="more" style="color:var(--faint)">${ICON.more}</span>
+        </button>`; }).join("") || '<div class="empty">No members match this filter.</div>'}
+    </div>
+  </section>`;
+}
+
+// ---------- review ----------
+function work(m) {
+  if (!S.work[m.member_id]) {
+    S.work[m.member_id] = { contact:false, added:[], items: m.plan.items.map(i => ({ id:i.item_id, state:"pending", text:i.clinician_text, mtext:i.member_text, editing:false })) };
+  }
+  return S.work[m.member_id];
+}
+function heroMetric(m) {
+  const crit = m.plan.items.find(i => i.rule_id === "CRITICAL");
+  const it = crit || m.plan.items.find(i => i.evidence.length) ;
+  const ev = it?.evidence?.[0];
+  if (ev) return ev;
+  const ap = S.snap.catalog.apob;
+  const series = m.labs.map(d => [d.draw, (d.values.find(v => v.analyte === "apob") || {}).value]).filter(x => x[1] != null);
+  return {analyte:"apob", display:ap.display, unit:ap.unit, values:series};
+}
+function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))); const f = x / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+function ruler(ev) {
+  const c = S.snap.catalog[ev.analyte];
+  const vals = ev.values.map(v => v[1]);
+  const last = vals[vals.length - 1];
+  if (!c) return "";
+  const pts = [...vals, c.ref_low, c.ref_high, c.critical_low, c.critical_high].filter(x => x != null);
+  let lo = Math.min(...pts), hi = Math.max(...pts);
+  const pad = (hi - lo) * 0.12 || 1; const step = niceStep((hi - lo + 2 * pad) / 4); lo = Math.max(0, Math.floor((lo - pad) / step) * step); hi = Math.ceil((hi + pad) / step) * step;
+  const pos = x => ((x - lo) / (hi - lo) * 100).toFixed(2);
+  const zl = c.ref_low != null ? pos(c.ref_low) : 0, zh = c.ref_high != null ? pos(c.ref_high) : 100;
+  const ticks = Array.from({length:26}, (_, k) => `<i class="${k % 5 === 0 ? "l" : ""}"></i>`).join("");
+  const rng = c.ref_low != null && c.ref_high != null ? `${fmt(c.ref_low)} to ${fmt(c.ref_high)}` : c.ref_high != null ? `under ${fmt(c.ref_high)}` : `over ${fmt(c.ref_low)}`;
+  return `<div><div class="ruler" role="img" aria-label="${esc(c.display)} ${fmt(last)} against lab range ${rng}">
+      <div class="ticks">${ticks}</div><div class="zone" style="left:${zl}%;width:${zh - zl}%"></div>
+      <div class="needle" style="left:${pos(last)}%"></div></div>
+    <div class="rlabels"><span>${fmt(lo)}</span><span>LAB RANGE ${esc(rng)}</span><span>${fmt(hi)}</span></div></div>`;
+}
+function spark(ev) {
+  const v = ev.values; if (v.length < 2) return "";
+  const W = 400, H = 90, P = 12;
+  const ys = v.map(x => x[1]); const lo = Math.min(...ys), hi = Math.max(...ys); const span = hi - lo || 1;
+  const X = k => P + k * (W - 2 * P) / (v.length - 1), Y = y => H - P - (y - lo) / span * (H - 2 * P - 8);
+  const line = v.map((p, k) => `${k ? "L" : "M"}${X(k).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(" ");
+  const label = d => /^\d{4}-/.test(d) ? new Date(d + "T00:00").toLocaleDateString(undefined, {month:"short"}).toUpperCase() : d.toUpperCase();
+  return `<div class="spark"><div class="lbl">[${v.length} ${/^\d{4}-/.test(v[0][0]) ? "draws" : "windows"}]</div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend ${v.map(p => fmt(p[1])).join(", ")}">
+      <path d="${line} L${X(v.length - 1)} ${H} L${X(0)} ${H} Z" fill="var(--line)"/>
+      <path d="${line}" fill="none" stroke="var(--ink)" stroke-opacity=".7" stroke-width="1.2"/>
+      ${v.map((p, k) => `<circle cx="${X(k)}" cy="${Y(p[1])}" r="${k === v.length - 1 ? 5 : 3}" fill="${k === v.length - 1 ? "var(--signal)" : "var(--ink)"}"/>`).join("")}
+    </svg>
+    <div class="rlabels">${v.map(p => `<span>${label(p[0])} · ${fmt(p[1])}</span>`).join("")}</div></div>`;
+}
+
+const BANNED = /abnormal|critical|disease|diagnos|pre-?diabet|diabet|deficien|\bscore\b|risk score|failure|cancer|danger|alarming|high risk|\burgent|\bworse\b|\bbad\b|organ age|biological age/ig;
+const ORDER = {refer:0, retest:1, discuss:2, lifestyle:3, monitor:4};
+// Mirrors copilot/member.py so the preview updates as the clinician edits.
+function summarise(m, w) {
+  const crit = m.plan.status === "blocked_critical";
+  if (crit && !w.contact) return {blocked:true, headline:"Held for clinician contact", body:["A clinician speaks with this member before any written summary goes out."]};
+  if (m.plan.flags.some(f => f.kind === "not_measured")) return {blocked:true, headline:"No lab results on file", body:["Nothing to summarise until a draw is added."]};
+  const base = Object.fromEntries(m.plan.items.map(i => [i.item_id, i]));
+  let items = w.items.filter(i => i.state !== "removed" && base[i.id].rule_id !== "CRITICAL" && i.mtext)
+    .map(i => ({...base[i.id], member_text:i.mtext}));
+  items = items.concat(w.added.filter(a => a.mtext).map(a => ({rule_id:"CLINICIAN", category:"discuss", priority:2, member_text:a.mtext})));
+  items.sort((a, b) => a.priority - b.priority || (ORDER[a.category] ?? 9) - (ORDER[b.category] ?? 9));
+  const wins = items.filter(i => POSITIVE.has(i.rule_id)), acts = items.filter(i => !POSITIVE.has(i.rule_id));
+  const hi = `Hi ${m.first_name}.`;
+  if (crit && !acts.length && !wins.length) return {blocked:false, headline:[hi, "Thanks for talking with us today."], body:["We will follow up on the result we discussed on the phone."], steps:[]};
+  const headline = !acts.length && wins.length ? [hi, "Good progress since your last visit."] : !acts.length ? [hi, "Your results look steady."] : wins.length ? [hi, "Some good progress, and a few small things to work on."] : [hi, "Here is your plan until we next meet."];
+  const body = wins.slice(0, 1).map(i => i.member_text);
+  if (crit) body.push("We will follow up on the result we discussed on the phone.");
+  if (acts.some(i => ["retest","refer"].includes(i.category))) body.push("We will repeat a test or two. That is routine and helps us be sure.");
+  if (acts.some(i => i.category === "discuss")) body.push("Your clinician will go through a couple of results with you at your visit.");
+  const steps = [...new Set(acts.map(i => i.member_text))].slice(0, 3);
+  const bad = [...new Set((headline.join(" ") + " " + body.join(" ") + " " + steps.join(" ")).match(BANNED) || [])];
+  if (bad.length) return {blocked:true, headline:"Needs rewording", body:[`Member messages can't use: ${bad.join(", ")}`]};
+  return {blocked:false, headline, body:body.slice(0, 3), steps};
+}
+function phone(m, w) {
+  const s = summarise(m, w);
+  return `<div class="phone" aria-label="Member view preview"><div class="sil1"></div><div class="sil2"></div><div class="ghost">Plan</div>
+    <div class="in">
+      <div class="top"><span>${ICON.back}</span><span class="mono">AFTER YOUR VISIT</span><span>${ICON.plus}</span></div>
+      ${s.blocked ? `<div class="greet"><b>${esc(s.headline)}</b></div><div class="glass held">${s.body.map(esc).join("<br>")}</div>`
+      : `<div class="greet">${esc(s.headline[0])}<br><b>${esc(s.headline[1])}</b></div>
+        ${s.body.length ? `<div class="held" style="opacity:.85">${s.body.map(esc).join(" ")}</div>` : ""}
+        ${s.steps.length ? `<div class="glass"><div class="lbl">[Next steps]</div>${s.steps.map((t, k) => `<div class="step"><span class="n">${k + 1}</span><span>${esc(t)}</span></div>`).join("")}</div>` : ""}
+        <div class="chips"><span class="chip">Approved by your clinician</span></div>`}
+    </div></div>`;
+}
+
+function viewReview() {
+  const m = member(S.current); const w = work(m);
+  const ev = heroMetric(m); const last = ev.values[ev.values.length - 1];
+  const crit = m.plan.status === "blocked_critical";
+  const done = S.done[m.member_id];
+  const pending = w.items.filter(i => i.state === "pending").length;
+  const idx = S.snap.members.findIndex(x => x.member_id === m.member_id);
+  return `
+  <section style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+    <div><button class="pill ghost" data-go="prep">${ICON.back}Queue</button><h1 style="margin-top:14px">Draft plan</h1></div>
+    <div class="chips"><span class="chip mono">${idx + 1} of ${S.snap.members.length}</span>
+      <button class="pill ghost" data-step="-1" aria-label="Previous member">${ICON.back}</button>
+      <button class="pill ghost" data-step="1" aria-label="Next member" style="transform:scaleX(-1)">${ICON.back}</button></div>
+  </section>
+  <section class="review" style="margin-top:20px">
+    <div class="panel">
+      <div class="mhead"><span class="pav" style="${avatar(m.member_id)}"></span><div class="pn">${esc(m.first_name)}<span>${m.age} · last draw ${esc(m.last_draw)} · ${m.fasting ? "fasting" : m.fasting === false ? "non-fasting" : "fasting unknown"}</span></div></div>
+      <div class="metric"><div class="lbl">[${esc(ev.display)}]</div><div class="big">${last ? fmt(last[1]) : "–"}<small>${esc(ev.unit)}</small></div></div>
+      ${ruler(ev)}${spark(ev)}
+      <div class="stack">
+        ${m.plan.changes.map(c => `<span class="chip" style="white-space:normal"><span class="dot sig"></span>${esc(c)}</span>`).join("") || '<span class="chip"><span class="dot"></span>Nothing moved more than 10%</span>'}
+      </div>
+      ${m.plan.flags.length ? `<div class="stack">${m.plan.flags.map(f => `<div class="flag ${f.kind === "critical" ? "crit" : ""}"><span class="k">${esc(f.kind.replace("_", " "))}</span><span>${esc(f.message)}</span></div>`).join("")}</div>` : ""}
+    </div>
+    <div class="items">
+      ${crit ? `<label class="check"><input type="checkbox" id="contact" ${w.contact ? "checked" : ""}> I spoke with ${esc(m.first_name)} today. Release the written summary.</label>` : ""}
+      ${w.items.map(it => itemCard(m, it)).join("")}
+      ${w.added.map((a, k) => `<div class="item" data-state="approved"><span class="rid">ADDED BY YOU</span><div class="txt">${esc(a.text)}</div>${a.mtext ? `<div class="memtxt"><b>Member sees:</b> ${esc(a.mtext)}</div>` : ""}<div class="acts"><button class="pill ghost" data-unadd="${k}">Remove</button></div></div>`).join("")}
+      <div class="item add" id="addform">
+        <span class="rid" style="color:var(--muted);background:var(--surface)">+ ADD YOUR OWN</span>
+        <div class="editbox"><label class="lbl" for="addtxt">For the clinical record</label><textarea id="addtxt" placeholder="Refer to dietitian for a 4 week plan"></textarea>
+          <label class="lbl" for="addmem">What the member sees (optional)</label><textarea id="addmem" placeholder="You will meet our dietitian next week."></textarea>
+          <div><button class="pill ghost" data-add="1">${ICON.plus}Add item</button></div></div>
+      </div>
+      <div class="bar2">
+        <span class="mono">${done ? "APPROVED · EDITS LOGGED" : `${pending} TO REVIEW · DRAFT, NOT A DIAGNOSIS`}</span>
+        <button class="pill sig" data-submit="1" ${done ? "disabled" : ""}>${done ? "Approved" : pending ? "Approve the rest and send" : "Send member summary"}</button>
+      </div>
+      ${S.toast ? `<p class="toast" role="status">${esc(S.toast)}</p>` : ""}
+    </div>
+    <div class="side">${phone(m, w)}<div class="cap">MEMBER VIEW · UPDATES AS YOU EDIT</div></div>
+  </section>`;
+}
+function itemCard(m, it) {
+  const base = m.plan.items.find(i => i.item_id === it.id);
+  const isCrit = base.rule_id === "CRITICAL";
+  return `<div class="item" data-state="${it.state}">
+    <span class="rid ${isCrit ? "crit" : ""}">${esc(isCrit ? "CRITICAL · CALL TODAY" : `${base.rule_id} · ${base.category.toUpperCase()}`)}</span>
+    ${it.editing ? `<div class="editbox"><label class="lbl" for="e-${it.id}">Clinician text</label><textarea id="e-${it.id}">${esc(it.text)}</textarea>
+        ${isCrit ? "" : `<label class="lbl" for="m-${it.id}">Member text</label><textarea id="m-${it.id}">${esc(it.mtext)}</textarea>`}
+        <div class="chips"><button class="pill solid" data-save="${it.id}">Save edit</button><button class="pill ghost" data-cancel="${it.id}">Cancel</button></div></div>`
+    : `<div class="txt">${esc(it.text)}</div>`}
+    <div class="why">${esc(base.why).split(" · ").map(p => `<span class="chip">${p}</span>`).join("")}</div>
+    ${!isCrit && it.mtext ? `<div class="memtxt"><b>Member sees:</b> ${esc(it.mtext)}</div>` : ""}
+    <div class="src">${esc(base.source.toUpperCase())}</div>
+    ${it.editing ? "" : `<div class="acts">
+      <button class="pill ${it.state === "approved" ? "solid" : "ghost"}" data-approve="${it.id}">${it.state === "approved" ? ICON.check + "Approved" : "Approve"}</button>
+      <button class="pill ghost" data-edit="${it.id}">Edit</button>
+      <button class="pill ghost" data-remove="${it.id}">${it.state === "removed" ? "Restore" : "Remove"}</button></div>`}
+  </div>`;
+}
+
+// ---------- labs ----------
+function viewLabs() {
+  const m = member(S.current);
+  const ids = [...new Set(m.labs.flatMap(d => d.values.map(v => v.analyte)))];
+  const review = m.labs.flatMap(d => d.review.map(r => `${d.draw}: ${r}`));
+  return `<section><h1>Extracted labs</h1><p class="sub">${esc(m.first_name)} · ${m.labs.length} reports read from PDF. <b>Held values are never used.</b></p></section>
+  <div class="chips" style="margin-top:14px">${S.snap.members.map(x => `<button class="chip" data-pick="${x.member_id}" style="${x.member_id === m.member_id ? "background:var(--ink);color:var(--on-ink)" : ""}">${esc(x.first_name)}</button>`).join("")}</div>
+  <div class="tablewrap" style="margin-top:14px"><table>
+    <thead><tr><th>Test</th><th>LOINC</th><th>Unit</th>${m.labs.map(d => `<th>${esc(d.draw)}</th>`).join("")}</tr></thead>
+    <tbody>${ids.map(a => { const c = S.snap.catalog[a]; return `<tr><td>${esc(c ? c.display : a)}</td><td class="mono">${esc(m.labs.flatMap(d => d.values).find(v => v.analyte === a)?.loinc || "–")}</td><td>${esc(c?.unit || "")}</td>
+      ${m.labs.map(d => { const v = d.values.find(x => x.analyte === a); if (!v) return "<td>–</td>"; return v.value == null ? `<td class="held" title="${esc(v.status)}">held · ${esc(v.raw)}</td>` : `<td>${fmt(v.value)}</td>`; }).join("")}</tr>`; }).join("")}
+    </tbody></table></div>
+  ${review.length ? `<div class="stack" style="margin-top:14px">${review.map(r => `<div class="flag"><span class="k">review</span><span>${esc(r)}</span></div>`).join("")}</div>` : ""}`;
+}
+
+// ---------- learning ----------
+function stats() {
+  if (S.live && S.serverLearning) return S.serverLearning;
+  const rows = {}; let shown = 0, kept = 0;
+  for (const r of S.log) for (const [iid, o] of Object.entries(r.outcomes)) {
+    const rule = iid.startsWith("CRIT-") ? "CRIT" : iid.startsWith("RETEST-") ? "RETEST" : iid;
+    const row = rows[rule] ||= {rule, shown:0, kept:0, reworded:0, removed:0, added:0};
+    if (o !== "added") { row.shown++; shown++; if (o === "kept") kept++; }
+    row[o]++;
+  }
+  const list = Object.values(rows).map(r => ({...r, edit_rate: r.shown ? +((r.reworded + r.removed) / r.shown).toFixed(2) : 0}))
+    .map(r => ({...r, review_protocol: r.shown >= 5 && r.edit_rate >= .5})).sort((a, b) => b.edit_rate - a.edit_rate || a.rule.localeCompare(b.rule));
+  return {approvals:S.log.length, acceptance_rate: shown ? kept / shown : null, rules:list};
+}
+function ring(v, label, sig) {
+  const r = 50, C = 2 * Math.PI * r, f = v == null ? 0 : Math.max(0, Math.min(1, v));
+  return `<div class="ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-width="3"/>
+    <circle cx="60" cy="60" r="${r}" fill="none" stroke="${sig ? "var(--signal)" : "var(--ink)"}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${C * f} ${C}" transform="rotate(-90 60 60)"/></svg>
+    <div class="v">${v == null ? "–" : Math.round(v * 100) + "%"}</div><div class="lbl">${label}</div></div>`;
+}
+function viewLearning() {
+  const s = stats();
+  const flagged = s.rules.filter(r => r.review_protocol).length;
+  return `<section><h1>Learning</h1><p class="sub">Every approval is compared with the draft. <b>Rules you keep rewriting get flagged for a protocol fix.</b></p></section>
+  <div class="learn" style="margin-top:20px">
+    ${ring(s.acceptance_rate, "Drafted items kept as written", true)}
+    <div class="ring"><div class="big" style="font-size:72px">${s.approvals}</div><div class="lbl">Approvals logged</div></div>
+    <div class="ring"><div class="big" style="font-size:72px">${flagged}</div><div class="lbl">Rules to review (5+ shown, 50%+ edited)</div></div>
+  </div>
+  ${s.rules.length ? `<div class="tablewrap" style="margin-top:16px"><table><thead><tr><th>Rule</th><th>Shown</th><th>Kept</th><th>Reworded</th><th>Removed</th><th>Added</th><th>Edit rate</th><th></th></tr></thead>
+    <tbody>${s.rules.map(r => `<tr><td class="mono">${esc(r.rule)}</td><td>${r.shown}</td><td>${r.kept}</td><td>${r.reworded}</td><td>${r.removed}</td><td>${r.added}</td><td>${Math.round(r.edit_rate * 100)}%</td><td>${r.review_protocol ? '<span class="chip"><span class="dot sig"></span>Review protocol</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`
+  : `<div class="empty" style="margin-top:16px">No approvals yet. Approve a draft plan and its edits show up here.</div>`}
+  ${S.log.length && !S.live ? `<p style="margin-top:12px"><button class="pill ghost" data-clearlog="1">Clear demo log</button></p>` : ""}`;
+}
+
+// ---------- actions ----------
+async function submit(m, w) {
+  const base = Object.fromEntries(m.plan.items.map(i => [i.item_id, i]));
+  w.items.forEach(i => { if (i.state === "pending") i.state = "approved"; });
+  const approved = w.items.filter(i => i.state === "approved").map(i => ({item_id:i.id, clinician_text:i.text, member_text:i.mtext}))
+    .concat(w.added.map((a, k) => ({item_id:`CUSTOM-${k + 1}`, clinician_text:a.text, member_text:a.mtext})));
+  const outcomes = {};
+  for (const i of w.items) {
+    const b = base[i.id];
+    outcomes[i.id] = i.state === "removed" ? "removed" : (i.text.trim() === b.clinician_text.trim() && i.mtext.trim() === b.member_text.trim()) ? "kept" : "reworded";
+  }
+  w.added.forEach((a, k) => outcomes[`CUSTOM-${k + 1}`] = "added");
+  if (S.live) {
+    try {
+      const r = await fetch(`members/${m.member_id}/approve?clinician=demo&critical_contact_logged=${w.contact}`, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(approved)});
+      if (!r.ok) throw new Error(r.status);
+      const lr = await fetch("learning"); if (lr.ok) S.serverLearning = await lr.json();
+      S.toast = "Approved. Edits logged on the server.";
+    } catch (e) { S.toast = "The server did not accept the approval. Check the API is running and try again."; render(); return; }
+  } else {
+    S.log.push({member_id:m.member_id, at:new Date().toISOString(), outcomes}); saveLog();
+    const kept = Object.values(outcomes).filter(o => o === "kept").length;
+    S.toast = `Approved. ${kept} of ${w.items.length} drafted items kept as written. Logged in Learning.`;
+  }
+  S.done[m.member_id] = true;
+  render();
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t || !S.snap) return;
+  const d = t.dataset;
+  if (d.view || d.go) { S.view = d.view || d.go; S.toast = ""; try { history.replaceState(null, "", "#" + S.view); } catch (x) {} if (S.view === "learning" && S.live) fetch("learning").then(r => r.json()).then(j => { S.serverLearning = j; render(); }).catch(() => {}); return render(); }
+  if (d.filter) { S.filter = d.filter; return render(); }
+  if (d.open) { S.current = d.open; S.view = "review"; S.toast = ""; render(); window.scrollTo({top:0}); return; }
+  if (d.pick) { S.current = d.pick; return render(); }
+  if (d.step) { const ms = S.snap.members; const k = ms.findIndex(x => x.member_id === S.current); S.current = ms[(k + +d.step + ms.length) % ms.length].member_id; S.toast = ""; return render(); }
+  if (d.clearlog) { S.log = []; saveLog(); S.done = {}; S.work = {}; return render(); }
+  const m = member(S.current); const w = m && work(m);
+  const it = id => w.items.find(i => i.id === id);
+  if (S.done[m?.member_id] && (d.approve || d.edit || d.remove || d.add || d.unadd)) return;
+  if (d.approve) { const i = it(d.approve); i.state = i.state === "approved" ? "pending" : "approved"; return render(); }
+  if (d.remove) { const i = it(d.remove); i.state = i.state === "removed" ? "pending" : "removed"; return render(); }
+  if (d.edit) { it(d.edit).editing = true; render(); $(`#e-${CSS.escape(d.edit)}`)?.focus(); return; }
+  if (d.cancel) { it(d.cancel).editing = false; return render(); }
+  if (d.save) { const i = it(d.save); i.text = $(`#e-${CSS.escape(d.save)}`).value.trim() || i.text; const mt = $(`#m-${CSS.escape(d.save)}`); if (mt) i.mtext = mt.value.trim(); i.editing = false; i.state = "approved"; return render(); }
+  if (d.add) { const tx = $("#addtxt").value.trim(); if (!tx) { $("#addtxt").focus(); return; } w.added.push({text:tx, mtext:$("#addmem").value.trim()}); return render(); }
+  if (d.unadd) { w.added.splice(+d.unadd, 1); return render(); }
+  if (d.submit) submit(m, w);
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "contact") { work(member(S.current)).contact = e.target.checked; render(); }
+});
+
+function render() {
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
+  $("#view").innerHTML = {prep:viewPrep, review:viewReview, labs:viewLabs, learning:viewLearning}[S.view]();
+}
+load();
+})();
+</script>
+
+</body>
+</html>
