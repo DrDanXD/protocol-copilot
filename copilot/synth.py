@@ -141,7 +141,7 @@ def render_lab_pdf(path: Path, layout: str, member_label: str, member_id: str,
 
 def wearable_series(start: date, days: int, rng: random.Random, hrv_base: float = 55,
                     hrv_drift: float = 0.0, rhr_base: float = 58, rhr_drift: float = 0.0,
-                    gap: tuple[int, int] | None = None) -> list[WearableDay]:
+                    gap: tuple[int, int] | None = None, sleep_base: float = 7.1) -> list[WearableDay]:
     """Daily summaries. drift is total change across the window."""
     out = []
     for i in range(days):
@@ -154,7 +154,7 @@ def wearable_series(start: date, days: int, rng: random.Random, hrv_base: float 
             day=d,
             hrv_rmssd=round(hrv_base + hrv_drift * frac + rng.gauss(0, 4), 1),
             resting_hr=round(rhr_base + rhr_drift * frac + rng.gauss(0, 1.5), 1),
-            sleep_hours=round(min(9.5, max(4.5, rng.gauss(7.1, 0.6))), 2),
+            sleep_hours=round(min(9.5, max(4.5, rng.gauss(sleep_base, 0.6))), 2),
             steps=max(1500, int(rng.gauss(8200, 2200))),
         ))
     return out
@@ -174,8 +174,17 @@ def jitter(panel: dict[str, float], rng: random.Random, pct: float = 0.06) -> di
     return {k: v * (1 + rng.uniform(-1, 1) * min(pct, CATALOG[k].tolerance / 2)) for k, v in panel.items()}
 
 
+STORIES = ["steady", "lipids_rising", "glucose_drift", "recovery_dropping", "vitd_low", "improving",
+           "critical_potassium", "lpa_method_change", "thyroid_iron", "short_sleep_nonfasting",
+           "liver_units", "conflicting_apob"]
+
+
 def demo_cohort(out_dir: Path, n: int = 12, seed: int = 7) -> list[dict]:
-    """Writes PDFs plus a manifest describing each member. Returns the manifest."""
+    """Writes PDFs plus a manifest describing each member. Returns the manifest.
+
+    Every member gets their own story and their own random parameters, so no two
+    trajectories repeat. Several stories exist to show a guardrail in the console.
+    """
     rng = random.Random(seed)
     manifest = []
     visit = date(2026, 11, 2)
@@ -183,42 +192,79 @@ def demo_cohort(out_dir: Path, n: int = 12, seed: int = 7) -> list[dict]:
         mid = f"M{1001 + i}"
         name = FIRST_NAMES[i % len(FIRST_NAMES)]
         sex = "F" if i % 2 == 0 else "M"
+        story = STORIES[i % len(STORIES)]
         base = jitter(BASE_PANEL, rng, 0.15)
-        # give some members a story
-        story = ["steady", "lipids_rising", "glucose_drift", "recovery_dropping", "vitd_low",
-                 "improving"][i % 6]
-        if i == 6:
-            story = "critical_potassium"   # shows the guardrail in the demo
+        offsets = [-rng.randint(220, 270), -rng.randint(100, 140), -rng.randint(6, 14)]
+        if story == "conflicting_apob":
+            offsets = [-rng.randint(170, 200), offsets[2] - rng.randint(8, 11), offsets[2]]
+        p = {  # this member's own story parameters
+            "apob0": rng.uniform(80, 92), "apob_step": rng.uniform(0.12, 0.2),
+            "a1c0": rng.uniform(5.25, 5.45), "a1c_step": rng.uniform(0.15, 0.3),
+            "vitd0": rng.uniform(26, 33), "vitd_step": rng.uniform(2.5, 5),
+            "imp0": rng.uniform(112, 128), "imp_step": rng.uniform(0.09, 0.14),
+            "hrv0": rng.uniform(46, 64), "hrv_drop": rng.uniform(0.2, 0.3),
+            "rhr0": rng.uniform(52, 64),
+        }
         draws = []
-        for k, offset in enumerate((-240, -120, -10)):
+        for k, offset in enumerate(offsets):
             panel = jitter(base, rng, 0.04)
-            step = k / 2
+            units: dict[str, str] = {}
+            fasting = True
             if story == "lipids_rising":
-                panel["apob"] = base["apob"] * (1 + 0.45 * step) + 10
-                panel["ldl"] = base["ldl"] * (1 + 0.2 * step) + 10
+                panel["apob"] = p["apob0"] * (1 + p["apob_step"]) ** k
+                panel["ldl"] = panel["apob"] * rng.uniform(1.15, 1.3)
             if story == "glucose_drift":
-                panel["a1c"] = 5.4 + 0.25 * k
-                panel["glucose"] = 92 + 5 * k
-                panel["insulin"] = 8 + 3 * k
+                panel["a1c"] = p["a1c0"] + p["a1c_step"] * k
+                panel["glucose"] = 90 + rng.uniform(3.5, 6.5) * k
+                panel["insulin"] = 7 * (1 + rng.uniform(0.25, 0.4)) ** k
             if story == "vitd_low":
-                panel["vitd"] = 24 - 2 * k
-            if story == "critical_potassium" and k == 2:
-                panel["potassium"] = 6.3
+                panel["vitd"] = p["vitd0"] - p["vitd_step"] * k
             if story == "improving":
-                panel["apob"] = 118 - 14 * k
-                panel["hscrp"] = 2.6 - 0.8 * k
+                panel["apob"] = p["imp0"] * (1 - p["imp_step"]) ** k
+                panel["hscrp"] = rng.uniform(2.2, 2.9) * (0.65 ** k)
+            if story == "critical_potassium" and k == 2:
+                panel["potassium"] = round(rng.uniform(6.2, 6.6), 1)
+            if story == "lpa_method_change":
+                panel["lpa"] = rng.uniform(150, 175)
+                if k == 0:
+                    panel["lpa"] = panel["lpa"] / 2.2
+                    units["lpa"] = "mg/dL"
+                if k == 2:
+                    panel["hscrp"] = rng.uniform(3.6, 5.2)
+            if story == "thyroid_iron" and k == 2:
+                panel["tsh"] = rng.uniform(5.2, 6.4)
+                panel["ferritin"] = rng.uniform(16, 26)
+            if story == "short_sleep_nonfasting" and k == 2:
+                fasting = False
+                panel["glucose"] = rng.uniform(108, 122)
+                panel["tg"] = rng.uniform(165, 210)
+            if story == "liver_units" and k == 2:
+                panel["alt"] = rng.uniform(58, 72)
+                units["glucose"] = "mmol/L"
+            if story == "conflicting_apob" and k >= 1:
+                panel["apob"] = rng.uniform(98, 104) if k == 1 else rng.uniform(136, 146)
             day = visit + timedelta(days=offset)
             layout = "A" if (i + k) % 2 == 0 else "B"
-            rows = [row(a, v) for a, v in panel.items()]
+            rows = []
+            for a, v in panel.items():
+                u = units.get(a)
+                if u == "mmol/L" and a == "glucose":
+                    rows.append(row(a, v / 18.016, unit=u, decimals=1))
+                elif u:
+                    rows.append(row(a, v, unit=u, decimals=0))
+                else:
+                    rows.append(row(a, v))
             pdf = out_dir / mid / f"{mid}_{day:%Y%m%d}.pdf"
-            render_lab_pdf(pdf, layout, f"{name} (synthetic)", mid, day, True, rows)
+            render_lab_pdf(pdf, layout, f"{name} (synthetic)", mid, day, fasting, rows)
             draws.append({"pdf": str(pdf.relative_to(out_dir)), "collected": day.isoformat(),
                           "layout": layout})
-        wear = wearable_series(visit - timedelta(days=90), 90, rng,
-                               hrv_drift=-22 if story == "recovery_dropping" else 0,
-                               rhr_drift=7 if story == "recovery_dropping" else 0)
+        wear = wearable_series(visit - timedelta(days=90), 90, rng, hrv_base=p["hrv0"], rhr_base=p["rhr0"],
+                               hrv_drift=-p["hrv0"] * p["hrv_drop"] if story == "recovery_dropping" else 0,
+                               rhr_drift=rng.uniform(6, 9) if story == "recovery_dropping" else 0,
+                               sleep_base=rng.uniform(5.7, 6.1) if story == "short_sleep_nonfasting"
+                               else rng.uniform(6.9, 7.6))
         manifest.append({
-            "member_id": mid, "first_name": name, "age": 38 + (i * 3) % 25, "sex": sex,
+            "member_id": mid, "first_name": name, "age": rng.randint(34, 66), "sex": sex,
             "visit_date": visit.isoformat(), "story": story, "draws": draws,
             "wearables": [w.model_dump(mode="json") for w in wear],
         })

@@ -155,8 +155,9 @@ def _wearable_trend(member: Member, metric: str) -> WearableTrend:
     need_b = (WEARABLE_BASELINE[0] - WEARABLE_BASELINE[1]) * WEARABLE_MIN_COVERAGE
     need_r = WEARABLE_RECENT * WEARABLE_MIN_COVERAGE
     ok = len(base_ok) >= need_b and len(rec_ok) >= need_r
-    return WearableTrend(metric, round(mean(base_ok), 2) if base_ok else None,
-                         round(mean(rec_ok), 2) if rec_ok else None, ok)
+    nd = 0 if metric == "steps" else 1
+    return WearableTrend(metric, round(mean(base_ok), nd) if base_ok else None,
+                         round(mean(rec_ok), nd) if rec_ok else None, ok)
 
 
 def what_changed(rep: TrendReport) -> list[str]:

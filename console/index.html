@@ -205,7 +205,11 @@ const ICON = {
 const AV = ["#3A3F3C,#8B918D","#ADA38D,#E3D9C4","#7D9C8C,#C9D6CE","#565D59,#ADA38D","#C9D6CE,#7D9C8C","#E3D9C4,#8B918D"];
 
 // ---------- state ----------
-const S = { snap:null, live:false, view:"prep", filter:"All", current:null, work:{}, done:{}, log:[], serverLearning:null, toast:"" };
+const S = { snap:null, live:false, view:"prep", filter:"All", current:null, work:{}, done:{}, log:[], serverLearning:null, toast:"", started:{}, times:[], who:"p1" };
+try { S.times = JSON.parse(localStorage.getItem("pc-times") || "[]"); } catch (e) { S.times = []; }
+const saveTimes = () => { try { localStorage.setItem("pc-times", JSON.stringify(S.times)); } catch (e) {} };
+const startClock = id => { if (!S.started[id] && !S.done[id]) S.started[id] = Date.now(); };
+const median = a => { if (!a.length) return null; const b = [...a].sort((x, y) => x - y); const h = b.length >> 1; return b.length % 2 ? b[h] : (b[h - 1] + b[h]) / 2; };
 try { S.log = JSON.parse(localStorage.getItem("pc-log") || "[]"); } catch (e) { S.log = []; }
 const saveLog = () => { try { localStorage.setItem("pc-log", JSON.stringify(S.log)); } catch (e) {} };
 
@@ -385,7 +389,7 @@ function viewReview() {
   return `
   <section style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
     <div><button class="pill ghost" data-go="prep">${ICON.back}Queue</button><h1 style="margin-top:14px">Draft plan</h1></div>
-    <div class="chips"><span class="chip mono">${idx + 1} of ${S.snap.members.length}</span>
+    <div class="chips"><span class="chip mono" id="clock" title="Prep timer for the timed study">${done ? "PREP DONE" : "PREP 0:00"}</span><span class="chip mono">${idx + 1} of ${S.snap.members.length}</span>
       <button class="pill ghost" data-step="-1" aria-label="Previous member">${ICON.back}</button>
       <button class="pill ghost" data-step="1" aria-label="Next member" style="transform:scaleX(-1)">${ICON.back}</button></div>
   </section>
@@ -484,6 +488,19 @@ function viewLearning() {
   ${s.rules.length ? `<div class="tablewrap" style="margin-top:16px"><table><thead><tr><th>Rule</th><th>Shown</th><th>Kept</th><th>Reworded</th><th>Removed</th><th>Added</th><th>Edit rate</th><th></th></tr></thead>
     <tbody>${s.rules.map(r => `<tr><td class="mono">${esc(r.rule)}</td><td>${r.shown}</td><td>${r.kept}</td><td>${r.reworded}</td><td>${r.removed}</td><td>${r.added}</td><td>${Math.round(r.edit_rate * 100)}%</td><td>${r.review_protocol ? '<span class="chip"><span class="dot sig"></span>Review protocol</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`
   : `<div class="empty" style="margin-top:16px">No approvals yet. Approve a draft plan and its edits show up here.</div>`}
+  <section class="panel" style="margin-top:16px">
+    <div class="lbl">[Timed study · Copilot arm]</div>
+    <div style="display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap">
+      <div><div class="big" style="font-size:72px">${S.times.length ? median(S.times.map(t => t.minutes)).toFixed(1) : "–"}<small>median min per member</small></div></div>
+      <div class="sub">n = ${S.times.length} members · timer starts when a member opens and stops at send.<br>Time the manual arm separately and add those rows. Protocol in docs/TIMED_STUDY.md.</div>
+    </div>
+    <label class="lbl" for="who">Participant code</label>
+    <input id="who" value="${esc(S.who)}" style="max-width:200px;height:40px;border-radius:999px;border:1px solid var(--line-2);background:var(--raise);color:var(--ink);padding:0 16px;font:inherit">
+    <label class="lbl" for="csv">Rows for docs/timed_study.csv</label>
+    <textarea id="csv" readonly style="min-height:120px;border-radius:16px;border:1px solid var(--line-2);background:var(--raise);color:var(--ink);padding:10px 12px;font-family:var(--mono);font-size:12px">participant,role,member_id,arm,minutes,errors
+${S.times.map(t => `${t.participant},,${t.member_id},copilot,${t.minutes},`).join("\n")}</textarea>
+    <div class="chips"><button class="pill solid" data-copycsv="1">Copy rows</button>${S.times.length ? '<button class="pill ghost" data-cleartimes="1">Clear times</button>' : ""}</div>
+  </section>
   ${S.log.length && !S.live ? `<p style="margin-top:12px"><button class="pill ghost" data-clearlog="1">Clear demo log</button></p>` : ""}`;
 }
 
@@ -511,6 +528,11 @@ async function submit(m, w) {
     const kept = Object.values(outcomes).filter(o => o === "kept").length;
     S.toast = `Approved. ${kept} of ${w.items.length} drafted items kept as written. Logged in Learning.`;
   }
+  if (S.started[m.member_id]) {
+    const min = +((Date.now() - S.started[m.member_id]) / 60000).toFixed(2);
+    S.times.push({participant:S.who, member_id:m.member_id, arm:"copilot", minutes:min}); saveTimes();
+    S.toast += ` Prep took ${min.toFixed(1)} min.`;
+  }
   S.done[m.member_id] = true;
   render();
 }
@@ -520,9 +542,12 @@ document.addEventListener("click", e => {
   const d = t.dataset;
   if (d.view || d.go) { S.view = d.view || d.go; S.toast = ""; try { history.replaceState(null, "", "#" + S.view); } catch (x) {} if (S.view === "learning" && S.live) fetch("learning").then(r => r.json()).then(j => { S.serverLearning = j; render(); }).catch(() => {}); return render(); }
   if (d.filter) { S.filter = d.filter; return render(); }
-  if (d.open) { S.current = d.open; S.view = "review"; S.toast = ""; render(); window.scrollTo({top:0}); return; }
+  if (d.open) { S.current = d.open; startClock(d.open); S.view = "review"; S.toast = ""; render(); window.scrollTo({top:0}); return; }
   if (d.pick) { S.current = d.pick; return render(); }
-  if (d.step) { const ms = S.snap.members; const k = ms.findIndex(x => x.member_id === S.current); S.current = ms[(k + +d.step + ms.length) % ms.length].member_id; S.toast = ""; return render(); }
+  if (d.step) { const ms = S.snap.members; const k = ms.findIndex(x => x.member_id === S.current); S.current = ms[(k + +d.step + ms.length) % ms.length].member_id; startClock(S.current); S.toast = ""; return render(); }
+  if (d.copycsv) { const ta = $("#csv"); const done = () => { S.toast = ""; t.textContent = "Copied"; };
+    try { navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); t.textContent = "Selected. Press Ctrl+C"; }); } catch (x) { ta.select(); t.textContent = "Selected. Press Ctrl+C"; } return; }
+  if (d.cleartimes) { S.times = []; saveTimes(); return render(); }
   if (d.clearlog) { S.log = []; saveLog(); S.done = {}; S.work = {}; return render(); }
   const m = member(S.current); const w = m && work(m);
   const it = id => w.items.find(i => i.id === id);
@@ -536,6 +561,9 @@ document.addEventListener("click", e => {
   if (d.unadd) { w.added.splice(+d.unadd, 1); return render(); }
   if (d.submit) submit(m, w);
 });
+document.addEventListener("input", e => { if (e.target.id === "who") S.who = e.target.value.trim() || "p1"; });
+setInterval(() => { const c = document.getElementById("clock"); const t0 = S.started[S.current];
+  if (c && t0 && !S.done[S.current]) { const s = Math.floor((Date.now() - t0) / 1000); c.textContent = `PREP ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; } }, 1000);
 document.addEventListener("change", e => {
   if (e.target.id === "contact") { work(member(S.current)).contact = e.target.checked; render(); }
 });

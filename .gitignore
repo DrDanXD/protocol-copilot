@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 data/edit_log.jsonl
 *.egg-info/
+site/
