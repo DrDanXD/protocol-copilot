@@ -10,3 +10,9 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q
       - run: python -m evals.run_evals
+      - name: Wheel installs and finds its protocol outside the checkout
+        run: |
+          pip wheel --no-deps -w dist .
+          python -m venv /tmp/wheelcheck
+          /tmp/wheelcheck/bin/pip install dist/*.whl
+          cd /tmp && /tmp/wheelcheck/bin/python -c "from copilot.rules import load_protocol; print(len(load_protocol().rules), 'rules')"

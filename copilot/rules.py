@@ -15,7 +15,8 @@ import yaml
 from .catalog import CATALOG
 from .trends import TrendReport
 
-DEFAULT_PROTOCOL = Path(__file__).resolve().parent.parent / "protocols" / "clinic_protocol.yaml"
+# Ships inside the package so it resolves the same way from a checkout or a pip install.
+DEFAULT_PROTOCOL = Path(__file__).resolve().parent / "protocols" / "clinic_protocol.yaml"
 WEARABLE_LABELS = {"hrv_rmssd": "HRV (ms)", "resting_hr": "Resting HR (bpm)",
                    "sleep_hours": "Sleep (h)", "steps": "Steps"}
 
